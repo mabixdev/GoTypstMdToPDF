@@ -70,7 +70,7 @@ type Config struct {
 func LoadConfig() *Config {
 	port := getEnvOr("PORT", "3000")
 	tempDir := getEnvOr("TEMP_DIR", "./temp")
-	skeletonPath := getEnvOr("SKELETON_PATH", "./sceleton.typ")
+	skeletonPath := getEnvOr("SKELETON_PATH", "./exam-template.typ")
 
 	maxFileSize := int64(50 * 1024 * 1024) // 50MB default
 	if sizeStr := os.Getenv("MAX_FILE_SIZE"); sizeStr != "" {
