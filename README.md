@@ -9,7 +9,7 @@ A high-performance Go service that converts Markdown content with embedded LaTeX
 - **LaTeX Mathematics**: Embedded LaTeX math expressions (`$inline$` and `$$display$$`)
 - **Beautiful Typography**: Professional document formatting using Typst
 - **Web Interface**: Easy-to-use web interface for instant conversions
-- **Template System**: Customizable document templates via skeleton files
+- **Template System**: Customizable document templates via template files
 - **Real-time Processing**: Fast conversion with progress indicators
 - **Memory Efficient**: No external CLI dependencies, everything runs in-process
 - **Containerized**: Docker support for easy deployment
@@ -26,8 +26,8 @@ A high-performance Go service that converts Markdown content with embedded LaTeX
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/mabixdev/MdPDFServicewithTypst.git
-   cd MdPDFServicewithTypst
+   git clone https://github.com/mabixdev/GoTypstMdToPDF.git
+   cd GoTypstMdToPDF
    ```
 
 2. **Download dependencies:**
@@ -81,11 +81,11 @@ The service will be available at `http://localhost:3000`
 ### Environment Variables
 
 ```bash
-PORT=3000                    # Server port
-TEMP_DIR=./temp             # Temporary files directory
-SKELETON_PATH=./sceleton.typ # Template file path
-MAX_FILE_SIZE=52428800      # Max file size in bytes (50MB)
-TIMEOUT_DURATION=30s        # Conversion timeout
+PORT=3000                          # Server port
+TEMP_DIR=./temp                   # Temporary files directory
+SKELETON_PATH=./exam-template.typ # Template file path
+MAX_FILE_SIZE=52428800           # Max file size in bytes (50MB)
+TIMEOUT_DURATION=30s             # Conversion timeout
 ```
 
 ### Web Interface
@@ -139,6 +139,20 @@ Content-Type: application/json
 }
 ```
 
+### Convert Markdown to PDF (Dedicated Endpoint)
+
+```bash
+POST /api/convert-markdown-to-pdf
+Content-Type: application/json
+
+{
+  "markdownContent": "# Your markdown here...",
+  "options": {
+    "filename": "document.pdf"
+  }
+}
+```
+
 ### Health Check
 
 ```bash
@@ -155,21 +169,21 @@ GET /api/stats
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Web Frontend  │────│   Go HTTP API   │────│  Embedded Typst │
-│   (HTML/JS)     │    │   (Gin Router)  │    │   (go-typst)    │
+│   Web Frontend  │────│   Go HTTP API   │────│ francescoalemanno│
+│   (HTML/JS)     │    │   (Gin Router)  │    │    /gotypst     │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                        │                        │
          │                        │                        │
     User Input              Template System           PDF Output
-   (Markdown +              (sceleton.typ +           (Beautiful
-    LaTeX math)              user content)             document)
+   (Markdown +           (exam-template.typ +        (Beautiful
+    LaTeX math)           user content)               document)
 ```
 
 ### Key Components
 
 - **Main Server** (`main.go`): HTTP server setup and routing
 - **PDF Service** (`service.go`): Core conversion logic and job management
-- **Template System**: Uses `sceleton.typ` with placeholder replacement
+- **Template System**: Uses `exam-template.typ` with placeholder replacement
 - **Job Management**: Concurrent conversion handling with timeouts
 
 ## 🐳 Docker Deployment
@@ -202,14 +216,14 @@ services:
       - MAX_FILE_SIZE=52428800
     volumes:
       - ./public:/app/public
-      - ./sceleton.typ:/app/sceleton.typ
+      - ./exam-template.typ:/app/exam-template.typ
     restart: unless-stopped
 ```
 
 ## 📁 Project Structure
 
 ```
-MdPDFServicewithTypst/
+GoTypstMdToPDF/
 ├── main.go               # Main server and configuration
 ├── service.go            # PDF conversion service
 ├── go.mod               # Go module dependencies
@@ -220,10 +234,11 @@ MdPDFServicewithTypst/
 │   ├── index.html      # Web interface
 │   ├── script.js       # Frontend JavaScript
 │   └── style.css       # Styling
-├── sceleton.typ         # Document template
+├── exam-template.typ    # Document template
+├── test.md             # Example markdown content
 ├── temp/               # Temporary files (auto-created)
 ├── bin/                # Built binaries (auto-created)
-└── README-GO.md        # This file
+└── README.md           # This file
 ```
 
 ## ⚡ Performance
@@ -258,6 +273,9 @@ make clean         # Clean build artifacts
 make deps          # Download dependencies
 make setup         # Create necessary directories
 make build-all     # Build for multiple platforms
+make install-tools # Install development tools
+make docker-build  # Build Docker image
+make docker-run    # Run Docker container
 ```
 
 ### Testing the API
@@ -275,7 +293,7 @@ curl -X POST http://localhost:3000/api/convert-to-pdf \
 
 ### Adding New Features
 
-1. **Custom Templates**: Modify `sceleton.typ` or add template selection
+1. **Custom Templates**: Modify `exam-template.typ` or add template selection
 2. **Output Formats**: Extend to support other Typst output formats
 3. **Preprocessing**: Add markdown preprocessing steps
 4. **Caching**: Implement result caching for repeated conversions
@@ -299,7 +317,7 @@ This project is open source. Please check the license file for details.
 
 ## 🔗 Links
 
-- [go-typst Library](https://github.com/Dadido3/go-typst)
+- [francescoalemanno/gotypst Library](https://github.com/francescoalemanno/gotypst)
 - [Typst Documentation](https://typst.app/docs/)
 - [Gin Web Framework](https://gin-gonic.com/)
 - [LaTeX Math Reference](https://katex.org/docs/supported.html)
@@ -310,11 +328,11 @@ This project is open source. Please check the license file for details.
 
 1. **"Failed to compile Typst"**
    - Check your Markdown syntax and LaTeX expressions
-   - Verify the skeleton template is valid
+   - Verify the template file is valid
 
 2. **"Permission denied" errors**
    - Ensure the temp directory is writable
-   - Check file permissions on the skeleton template
+   - Check file permissions on the template file
 
 3. **High memory usage**
    - Adjust MAX_FILE_SIZE environment variable
