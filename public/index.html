@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown to PDF Service</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 Markdown to PDF Converter</h1>
+            <p>Convert your Markdown with LaTeX math to beautiful PDFs using Typst</p>
+            <div class="status-indicator">
+                <span id="health-status">Checking service...</span>
+            </div>
+        </header>
+
+        <main>
+            <form id="conversion-form">
+                <div class="input-section">
+                    <label for="markdown-input">Markdown Content with LaTeX:</label>
+                    <textarea 
+                        id="markdown-input" 
+                        name="markdownContent" 
+                        placeholder="Enter your Markdown with embedded LaTeX here..."
+                        required
+                    ># Chemistry Mock Exam
+
+**Time Allowed: 3 hours**  
+**Total Marks: 100**
+
+---
+
+### Task 1
+
+**Chemical Equilibrium and Acid-Base Chemistry (35 marks)**
+
+Consider the following equilibrium system in aqueous solution at 25°C:
+
+$$\text{H}_2\text{SO}_3(aq) + 2\text{NaOH}(aq) \rightleftharpoons \text{Na}_2\text{SO}_3(aq) + 2\text{H}_2\text{O}(l)$$
+
+The acid dissociation constants for sulfurous acid are:
+- $K_{a1} = 1.7 \times 10^{-2}$
+- $K_{a2} = 6.4 \times 10^{-8}$
+
+**Part A (15 marks):**
+1. Calculate the pH of a 0.100 M $\text{H}_2\text{SO}_3$ solution.
+
+### Task 2
+
+**Mathematical Expressions**
+
+For the quadratic equation $ax^2 + bx + c = 0$, the solutions are:
+
+$$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$$
+
+### Task 3
+
+**Lists and Formatting**
+
+- **Bold text** and *italic text*
+- Numbered lists work too
+- Code blocks:
+
+```python
+def calculate_ph(concentration):
+    return -math.log10(concentration)
+```</textarea>
+                </div>
+
+                <div class="options-section">
+                    <div class="option-group">
+                        <label for="filename">Filename (optional):</label>
+                        <input 
+                            type="text" 
+                            id="filename" 
+                            name="filename" 
+                            placeholder="document.pdf"
+                            pattern=".*\.pdf$"
+                        >
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button type="submit" id="convert-btn">
+                        <span class="btn-text">Generate PDF</span>
+                        <span class="btn-spinner" style="display: none;">🔄</span>
+                    </button>
+                    <button type="button" id="clear-btn">Clear</button>
+                </div>
+            </form>
+
+            <div id="status-messages"></div>
+        </main>
+
+        <footer>
+            <div class="stats">
+                <span id="stats-info">Active processes: 0</span>
+                <button id="refresh-stats">Refresh Stats</button>
+            </div>
+            <p>Powered by <a href="https://typst.app/" target="_blank">Typst</a> + <a href="https://github.com/MyST-Parser/MyST-Parser" target="_blank">Markdown</a></p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
