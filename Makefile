@@ -2,6 +2,9 @@
 
 .PHONY: build run clean test deps help build-cli build-api-only
 
+# Set Go proxy to direct to avoid network issues
+export GOPROXY=direct
+
 # Default target
 help:
 	@echo "Available targets:"
@@ -20,17 +23,17 @@ help:
 # Build the full Go service (with web UI)
 build:
 	@echo "🔨 Building full service..."
-	go build -o bin/md-pdf-service *.go
+	GOPROXY=direct go build -o bin/md-pdf-service *.go
 
 # Build CLI version only
 build-cli: setup
 	@echo "🔨 Building CLI version..."
-	go build -o bin/md-pdf-cli cmd/cli/main.go
+	GOPROXY=direct go build -o bin/md-pdf-cli cmd/cli/main.go
 
 # Build API-only version (no static files)
 build-api: setup
 	@echo "🔨 Building API-only service..."
-	go build -ldflags="-X main.ApiOnly=true" -o bin/md-pdf-api-only *.go
+	GOPROXY=direct go build -ldflags="-X main.ApiOnly=true" -o bin/md-pdf-api-only *.go
 
 # Run the full service
 run: build
