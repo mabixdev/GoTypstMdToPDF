@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 	"strconv"
@@ -11,7 +12,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Build-time variable for API-only mode
+var ApiOnly string
+
 func main() {
+	// Command line flags
+	var apiOnly = flag.Bool("api-only", false, "Run in API-only mode (no web UI)")
+	flag.Parse()
+
+	// Check if API-only mode is enabled via build flag or command line
+	isApiOnly := *apiOnly || ApiOnly == "true"
+
 	// Initialize the PDF service
 	service := NewPDFService()
 
@@ -25,8 +36,17 @@ func main() {
 	config.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
 	r.Use(cors.New(config))
 
-	// Serve static files
-	r.Use(static.Serve("/", static.LocalFile("./public", false)))
+	// Serve static files only if not in API-only mode
+	if !isApiOnly {
+		// Check if public directory exists
+		if _, err := os.Stat("./public"); err == nil {
+			r.Use(static.Serve("/", static.LocalFile("./public", false)))
+			log.Println("📁 Serving static files from ./public")
+		} else {
+			log.Println("⚠️  No public directory found, running in API-only mode")
+			isApiOnly = true
+		}
+	}
 
 	// API routes
 	api := r.Group("/api")
@@ -39,11 +59,35 @@ func main() {
 	// Health check
 	r.GET("/health", service.HealthHandler)
 
+	// Root endpoint for API-only mode
+	if isApiOnly {
+		r.GET("/", func(c *gin.Context) {
+			c.JSON(200, gin.H{
+				"service": "Markdown to PDF Service",
+				"version": "1.0.0",
+				"mode":    "API-only",
+				"endpoints": gin.H{
+					"convert":    "POST /api/convert-to-pdf",
+					"convert-md": "POST /api/convert-markdown-to-pdf",
+					"health":     "GET /health",
+					"stats":      "GET /api/stats",
+				},
+				"docs": "https://github.com/mabixdev/TypstPDFService#api-endpoints",
+			})
+		})
+	}
+
 	// Get port from environment or use default
 	port := getEnvOr("PORT", "3000")
 
-	log.Printf("🚀 Markdown to PDF Service (Go) starting on port %s", port)
-	log.Printf("📝 Access the web interface at http://localhost:%s", port)
+	if isApiOnly {
+		log.Printf("🚀 Markdown to PDF Service (API-only) starting on port %s", port)
+		log.Printf("📡 API endpoints available at http://localhost:%s/api/", port)
+		log.Printf("💡 Use POST /api/convert-to-pdf to convert markdown to PDF")
+	} else {
+		log.Printf("🚀 Markdown to PDF Service (Go) starting on port %s", port)
+		log.Printf("📝 Access the web interface at http://localhost:%s", port)
+	}
 
 	// Start server
 	if err := r.Run(":" + port); err != nil {
