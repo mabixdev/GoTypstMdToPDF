@@ -81,6 +81,7 @@ Import the core functionality into your Go application.
 package main
 
 import (
+    "context"
     "fmt"
     "log"
     
@@ -90,7 +91,8 @@ import (
 func main() {
     // Simple conversion
     markdown := "# Test\n\nMath: $E = mc^2$"
-    pdfBytes, err := mdpdf.QuickConvert(markdown)
+    ctx := context.Background()
+    pdfBytes, err := mdpdf.QuickConvert(ctx, markdown)
     if err != nil {
         log.Fatal(err)
     }
@@ -98,7 +100,7 @@ func main() {
     fmt.Printf("Generated PDF: %d bytes\n", len(pdfBytes))
     
     // File conversion
-    err = mdpdf.QuickConvertFile("input.md", "output.pdf")
+    err = mdpdf.QuickConvertFile(ctx, "input.md", "output.pdf")
     if err != nil {
         log.Fatal(err)
     }
@@ -114,7 +116,8 @@ func main() {
         log.Fatal(err)
     }
     
-    pdfBytes, err = converter.ConvertFromString(markdown)
+    ctx := context.Background() // or context.WithTimeout for timeout handling
+    pdfBytes, err = converter.ConvertFromString(ctx, markdown)
     if err != nil {
         log.Fatal(err)
     }

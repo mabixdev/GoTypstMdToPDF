@@ -2,6 +2,7 @@
 package mdpdf
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -53,7 +54,14 @@ func NewConverter(opts *Options) (*Converter, error) {
 }
 
 // ConvertFromString converts markdown string to PDF bytes
-func (c *Converter) ConvertFromString(markdownContent string) ([]byte, error) {
+func (c *Converter) ConvertFromString(ctx context.Context, markdownContent string) ([]byte, error) {
+	// Check if context is already cancelled
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+
 	// Validate input size
 	if int64(len(markdownContent)) > c.options.MaxFileSize {
 		return nil, fmt.Errorf("content exceeds maximum size limit (%d bytes)", c.options.MaxFileSize)
@@ -65,6 +73,13 @@ func (c *Converter) ConvertFromString(markdownContent string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to read template: %w", err)
 	}
 
+	// Check context again before processing
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+
 	// Replace placeholder
 	templateStr := string(templateContent)
 	if !strings.Contains(templateStr, "{{Placeholder Markdown}}") {
@@ -73,32 +88,48 @@ func (c *Converter) ConvertFromString(markdownContent string) ([]byte, error) {
 
 	typstContent := strings.Replace(templateStr, "{{Placeholder Markdown}}", markdownContent, 1)
 
-	// Convert to PDF
-	pdfBytes, err := gotypst.PDF([]byte(typstContent))
-	if err != nil {
-		return nil, fmt.Errorf("typst compilation failed: %w", err)
+	// Convert to PDF with context handling
+	// Since gotypst.PDF doesn't support context, we'll use a goroutine with timeout
+	type result struct {
+		pdfBytes []byte
+		err      error
 	}
 
-	if len(pdfBytes) == 0 {
-		return nil, fmt.Errorf("generated PDF is empty")
-	}
+	resultChan := make(chan result, 1)
+	go func() {
+		pdfBytes, err := gotypst.PDF([]byte(typstContent))
+		resultChan <- result{pdfBytes: pdfBytes, err: err}
+	}()
 
-	return pdfBytes, nil
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case res := <-resultChan:
+		if res.err != nil {
+			return nil, fmt.Errorf("typst compilation failed: %w", res.err)
+		}
+
+		if len(res.pdfBytes) == 0 {
+			return nil, fmt.Errorf("generated PDF is empty")
+		}
+
+		return res.pdfBytes, nil
+	}
 }
 
 // ConvertFromFile converts markdown file to PDF bytes
-func (c *Converter) ConvertFromFile(inputPath string) ([]byte, error) {
+func (c *Converter) ConvertFromFile(ctx context.Context, inputPath string) ([]byte, error) {
 	markdownContent, err := os.ReadFile(inputPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read input file: %w", err)
 	}
 
-	return c.ConvertFromString(string(markdownContent))
+	return c.ConvertFromString(ctx, string(markdownContent))
 }
 
 // ConvertFromFileToFile converts markdown file to PDF file
-func (c *Converter) ConvertFromFileToFile(inputPath, outputPath string) error {
-	pdfBytes, err := c.ConvertFromFile(inputPath)
+func (c *Converter) ConvertFromFileToFile(ctx context.Context, inputPath, outputPath string) error {
+	pdfBytes, err := c.ConvertFromFile(ctx, inputPath)
 	if err != nil {
 		return err
 	}
@@ -111,8 +142,8 @@ func (c *Converter) ConvertFromFileToFile(inputPath, outputPath string) error {
 }
 
 // ConvertFromStringToFile converts markdown string to PDF file
-func (c *Converter) ConvertFromStringToFile(markdownContent, outputPath string) error {
-	pdfBytes, err := c.ConvertFromString(markdownContent)
+func (c *Converter) ConvertFromStringToFile(ctx context.Context, markdownContent, outputPath string) error {
+	pdfBytes, err := c.ConvertFromString(ctx, markdownContent)
 	if err != nil {
 		return err
 	}
@@ -157,19 +188,19 @@ func (c *Converter) ValidateTemplate() error {
 // Simple convenience functions
 
 // QuickConvert provides a simple one-line conversion
-func QuickConvert(markdownContent string) ([]byte, error) {
+func QuickConvert(ctx context.Context, markdownContent string) ([]byte, error) {
 	converter, err := NewConverter(DefaultOptions())
 	if err != nil {
 		return nil, err
 	}
-	return converter.ConvertFromString(markdownContent)
+	return converter.ConvertFromString(ctx, markdownContent)
 }
 
 // QuickConvertFile provides a simple file-to-file conversion
-func QuickConvertFile(inputPath, outputPath string) error {
+func QuickConvertFile(ctx context.Context, inputPath, outputPath string) error {
 	converter, err := NewConverter(DefaultOptions())
 	if err != nil {
 		return err
 	}
-	return converter.ConvertFromFileToFile(inputPath, outputPath)
+	return converter.ConvertFromFileToFile(ctx, inputPath, outputPath)
 }
