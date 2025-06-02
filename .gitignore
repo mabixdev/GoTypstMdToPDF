@@ -91,4 +91,9 @@ coverage.xml
 
 # Debug files
 debug
-__debug_bin 
+__debug_bin
+
+# Local testing files
+test/
+local_test*
+*_test_output* 
