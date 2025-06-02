@@ -1,4 +1,5 @@
-module github.com/mabixdev/TypstPDFService
+module github.com/mabixdev/GoTypstMdToPDF
+
 
 go 1.21
 
