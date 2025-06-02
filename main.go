@@ -72,7 +72,7 @@ func main() {
 					"health":     "GET /health",
 					"stats":      "GET /api/stats",
 				},
-				"docs": "https://github.com/mabixdev/TypstPDFService#api-endpoints",
+				"docs": "https://github.com/mabixdev/GoTypstMdToPDF#api-endpoints",
 			})
 		})
 	}
